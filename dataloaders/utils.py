@@ -22,7 +22,7 @@ def decode_segmap(label_mask, dataset, plot=False):
         (np.ndarray, optional): the resulting decoded color image.
     """
     if dataset == 'pascal' or dataset == 'coco':
-        n_classes = 21
+        n_classes = 2
         label_colours = get_pascal_labels()
     elif dataset == 'cityscapes':
         n_classes = 19
@@ -93,9 +93,5 @@ def get_pascal_labels():
     Returns:
         np.ndarray with dimensions (21, 3)
     """
-    return np.asarray([[0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0],
-                       [0, 0, 128], [128, 0, 128], [0, 128, 128], [128, 128, 128],
-                       [64, 0, 0], [192, 0, 0], [64, 128, 0], [192, 128, 0],
-                       [64, 0, 128], [192, 0, 128], [64, 128, 128], [192, 128, 128],
-                       [0, 64, 0], [128, 64, 0], [0, 192, 0], [128, 192, 0],
-                       [0, 64, 128]])
+    return np.asarray([[0, 0, 0, 255], [128, 0, 0, 255]])
+

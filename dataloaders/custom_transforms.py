@@ -3,6 +3,9 @@ import random
 import numpy as np
 
 from PIL import Image, ImageOps, ImageFilter
+from dataloaders.utils import encode_segmap
+import torchvision.transforms.functional as t_func
+
 
 class Normalize(object):
     """Normalize a tensor image with mean and standard deviation.
@@ -19,6 +22,7 @@ class Normalize(object):
         mask = sample['label']
         img = np.array(img).astype(np.float32)
         mask = np.array(mask).astype(np.float32)
+        mask = encode_segmap(mask)
         img /= 255.0
         img -= self.mean
         img /= self.std
@@ -160,6 +164,27 @@ class FixedResize(object):
 
         img = img.resize(self.size, Image.BILINEAR)
         mask = mask.resize(self.size, Image.NEAREST)
+
+        return {'image': img,
+                'label': mask}
+
+
+class ColorJitter(object):
+    def __init__(self, brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1, gamma=0.1):
+        self.brightness = brightness
+        self.contrast = contrast
+        self.saturation = saturation
+        self.hue = hue
+        self.gamma = gamma
+
+    def __call__(self, sample):
+        img = sample['image']
+        mask = sample['label']
+        img = t_func.adjust_brightness(img, self.brightness)
+        img = t_func.adjust_contrast(img, self.contrast)
+        img = t_func.adjust_saturation(img, self.saturation)
+        img = t_func.adjust_hue(img, self.hue)
+        img = t_func.adjust_gamma(img, self.gamma)
 
         return {'image': img,
                 'label': mask}

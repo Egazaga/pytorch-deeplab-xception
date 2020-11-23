@@ -11,7 +11,7 @@ class VOCSegmentation(Dataset):
     """
     PascalVoc dataset
     """
-    NUM_CLASSES = 21
+    NUM_CLASSES = 2
 
     def __init__(self,
                  args,
@@ -84,17 +84,16 @@ class VOCSegmentation(Dataset):
     def transform_tr(self, sample):
         composed_transforms = transforms.Compose([
             tr.RandomHorizontalFlip(),
-            tr.RandomScaleCrop(base_size=self.args.base_size, crop_size=self.args.crop_size),
-            tr.RandomGaussianBlur(),
+            tr.RandomScaleCrop(base_size=513, crop_size=513),
+            tr.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2, gamma=0.2),
             tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-            tr.ToTensor()])
-
+            tr.ToTensor()
+        ])
         return composed_transforms(sample)
 
     def transform_val(self, sample):
 
         composed_transforms = transforms.Compose([
-            tr.FixScaleCrop(crop_size=self.args.crop_size),
             tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             tr.ToTensor()])
 

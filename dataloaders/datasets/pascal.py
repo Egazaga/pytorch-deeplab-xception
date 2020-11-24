@@ -85,7 +85,7 @@ class VOCSegmentation(Dataset):
         composed_transforms = transforms.Compose([
             tr.RandomHorizontalFlip(),
             tr.RandomScaleCrop(base_size=513, crop_size=513),
-            tr.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2, gamma=0.2),
+            tr.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.3, gamma=0.3),
             tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             tr.ToTensor()
         ])

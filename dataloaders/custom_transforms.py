@@ -171,11 +171,11 @@ class FixedResize(object):
 
 class ColorJitter(object):
     def __init__(self, brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1, gamma=0.1):
-        self.brightness = brightness
-        self.contrast = contrast
-        self.saturation = saturation
-        self.hue = hue
-        self.gamma = gamma
+        self.brightness = random.uniform(1-brightness, 1+brightness)
+        self.contrast = random.uniform(1-contrast, 1+contrast)
+        self.saturation = random.uniform(1-saturation, 1+saturation)
+        self.hue = random.uniform(-hue, hue)
+        self.gamma = random.uniform(1-gamma, 1+gamma)
 
     def __call__(self, sample):
         img = sample['image']

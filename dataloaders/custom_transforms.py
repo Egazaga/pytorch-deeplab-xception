@@ -110,7 +110,7 @@ class RandomCrop(object):
         x1 = random.randint(0, w - self.crop_size)
         y1 = random.randint(0, h - self.crop_size)
         for i, img in enumerate(imgs):
-            img[i] = img.crop((x1, y1, x1 + self.crop_size, y1 + self.crop_size))
+            imgs[i] = img.crop((x1, y1, x1 + self.crop_size, y1 + self.crop_size))
         mask = mask.crop((x1, y1, x1 + self.crop_size, y1 + self.crop_size))
 
         return {'image': imgs,

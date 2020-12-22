@@ -301,5 +301,5 @@ def main():
     trainer.writer.close()
 
 if __name__ == "__main__":
-    wandb.init()
+    wandb.init(sync_tensorboard=True)
     main()

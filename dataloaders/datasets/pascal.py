@@ -7,6 +7,7 @@ from mypath import Path
 from torchvision import transforms
 from dataloaders import custom_transforms as tr
 
+
 class VOCSegmentation(Dataset):
     """
     PascalVoc dataset
@@ -61,12 +62,11 @@ class VOCSegmentation(Dataset):
         print('Number of images in {}: {:d}'.format(split, len(self.images)))
 
     def __len__(self):
-        return len(self.images)
-
+        return len(self.images) - 2
 
     def __getitem__(self, index):
-        _img, _target = self._make_img_gt_point_pair(index)
-        sample = {'image': _img, 'label': _target}
+        _imgs, _target = self._make_img_gt_point_pair(index)
+        sample = {'image': _imgs, 'label': _target}
 
         for split in self.split:
             if split == "train":
@@ -74,17 +74,19 @@ class VOCSegmentation(Dataset):
             elif split == 'val':
                 return self.transform_val(sample)
 
-
     def _make_img_gt_point_pair(self, index):
-        _img = Image.open(self.images[index]).convert('RGB')
-        _target = Image.open(self.categories[index])
+        imgs = [Image.open(self.images[index]).convert('RGB'),
+                Image.open(self.images[index + 1]).convert('RGB'),
+                Image.open(self.images[index + 2]).convert('RGB')]
 
-        return _img, _target
+        target = Image.open(self.categories[index + 1])
+
+        return imgs, target
 
     def transform_tr(self, sample):
         composed_transforms = transforms.Compose([
             tr.RandomHorizontalFlip(),
-            tr.RandomScaleCrop(base_size=513, crop_size=513),
+            tr.RandomCrop(crop_size=513),
             tr.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.3, gamma=0.3),
             tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             tr.ToTensor()
@@ -92,7 +94,6 @@ class VOCSegmentation(Dataset):
         return composed_transforms(sample)
 
     def transform_val(self, sample):
-
         composed_transforms = transforms.Compose([
             tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             tr.ToTensor()])
@@ -140,5 +141,3 @@ if __name__ == '__main__':
             break
 
     plt.show(block=True)
-
-

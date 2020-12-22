@@ -74,6 +74,9 @@ class ResNet(nn.Module):
         if pretrained:
             self._load_pretrained_model()
 
+            self.conv1 = nn.Conv2d(9, 64, kernel_size=7, stride=2, padding=3,
+                                   bias=False)
+
     def _make_layer(self, block, planes, blocks, stride=1, dilation=1, BatchNorm=None):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
@@ -156,7 +159,7 @@ def ResNet101(output_stride, BatchNorm, pretrained=True):
 if __name__ == "__main__":
     import torch
     model = ResNet101(BatchNorm=nn.BatchNorm2d, pretrained=True, output_stride=8)
-    input = torch.rand(1, 3, 512, 512)
+    input = torch.rand(1, 9, 512, 512)
     output, low_level_feat = model(input)
     print(output.size())
     print(low_level_feat.size())

@@ -46,9 +46,7 @@ class ToTensor(object):
         for i, img in enumerate(imgs):
             imgs[i] = np.array(img).astype(np.float32).transpose((2, 0, 1))
         mask = np.array(mask).astype(np.float32)
-
         imgs = np.vstack(imgs)
-        print(imgs.shape)
 
         img = torch.from_numpy(imgs).float()
         mask = torch.from_numpy(mask).float()

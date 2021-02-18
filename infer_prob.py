@@ -8,55 +8,60 @@ from tqdm.contrib import tzip
 from modeling.deeplab import *
 from modeling import custom_transforms as tr
 
-parser = argparse.ArgumentParser(description="PyTorch DeeplabV3Plus Training")
 
-parser.add_argument('--in-path', type=str, default='D:/DainApp/Dain_in/hockey_nlm_cb/original_frames', help='image to test')
-parser.add_argument('--out-path', type=str, default='out', help='mask image to save')
-parser.add_argument('--ckpt', type=str, default='DLv3+torch.pth.tar', help='saved model')
-parser.add_argument('--out-stride', type=int, default=16, help='network output stride (default: 8)')
-args = parser.parse_args()
+def infer_dl(in_path, out_path, ckpt='DLv3+torch.pth.tar'):
+    model = DeepLab(num_classes=2, backbone='resnet', output_stride=16, sync_bn=False, freeze_bn=False)
+    ckpt = torch.load(ckpt, map_location='cpu')
+    model.load_state_dict(ckpt['state_dict'])
+    model.cuda()
+    model.eval()
+    composed_transforms = transforms.Compose([
+        tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+        tr.ToTensor()])
+    img_names = sorted(glob.glob(in_path + "/*.png"))
 
-model = DeepLab(num_classes=2, backbone='resnet', output_stride=args.out_stride, sync_bn=False, freeze_bn=False)
-ckpt = torch.load(args.ckpt, map_location='cpu')
-model.load_state_dict(ckpt['state_dict'])
-model.cuda()
-model.eval()
-composed_transforms = transforms.Compose([
-    tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-    tr.ToTensor()])
-img_names = sorted(glob.glob(args.in_path + "/*.png"))
+    batch_size = 4
+    batch = []
+    for i, triple in enumerate(tzip(img_names, img_names[1:], img_names[2:])):
+        # if i == 12:
+        #     break
+        images = [Image.open(triple[0]).convert('RGB'),
+                  Image.open(triple[1]).convert('RGB'),
+                  Image.open(triple[2]).convert('RGB')]
+        tensor_in = composed_transforms(images)
+        batch.append(tensor_in)
 
-batch_size = 4
-batch = []
-for i, triple in enumerate(tzip(img_names, img_names[1:], img_names[2:])):
-    # if i == 12:
-    #     break
-    images = [Image.open(triple[0]).convert('RGB'),
-              Image.open(triple[1]).convert('RGB'),
-              Image.open(triple[2]).convert('RGB')]
-    tensor_in = composed_transforms(images)
-    batch.append(tensor_in)
+        if i % batch_size == batch_size - 1 or i == len(img_names) - 3:  # if full or last batch
+            tensor_in = torch.stack(batch)
+            if torch.cuda.is_available():
+                tensor_in = tensor_in.cuda()
+            with torch.no_grad():
+                output = model(tensor_in)
 
-    if i % batch_size == batch_size - 1 or i == len(img_names) - 3:  # if full or last batch
-        tensor_in = torch.stack(batch)
-        if torch.cuda.is_available():
-            tensor_in = tensor_in.cuda()
-        with torch.no_grad():
-            output = model(tensor_in)
+            # probability map or threshold
+            for j, o in enumerate(output):
+                pred = o[1].cpu().numpy()
+                pred -= pred.min()
+                pred *= 255.0 / pred.max()
+                pred = np.where(pred < 128, 0, 255)
 
-        # probability map or threshold
-        for j, o in enumerate(output):
-            pred = o[1].cpu().numpy()
-            pred -= pred.min()
-            pred *= 255.0 / pred.max()
-            pred = np.where(pred < 128, 0, 255)
+                # # max class prob
+                # preds = output.cpu()[0].numpy()
+                # pred0 = (preds[0] - preds[0].min()) * 255.0 / preds[0].max()
+                # pred1 = (preds[1] - preds[1].min()) * 255.0 / preds[1].max()
+                # pred = np.where(pred0 > pred1, 0, 255)
 
-            # # max class prob
-            # preds = output.cpu()[0].numpy()
-            # pred0 = (preds[0] - preds[0].min()) * 255.0 / preds[0].max()
-            # pred1 = (preds[1] - preds[1].min()) * 255.0 / preds[1].max()
-            # pred = np.where(pred0 > pred1, 0, 255)
+                im = Image.fromarray(pred.astype('uint8'), 'L')
+                im.save(out_path + '/' + str(i - batch_size + j + 3).zfill(6) + ".png")
+            batch = []
 
-            im = Image.fromarray(pred.astype('uint8'), 'L')
-            im.save(args.out_path + '/' + str(i - batch_size + j + 3).zfill(6) + ".png")
-        batch = []
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="PyTorch DeeplabV3Plus Training")
+
+    parser.add_argument('--in-path', type=str, help='image to test')
+    parser.add_argument('--out-path', type=str, help='mask image to save')
+    parser.add_argument('--ckpt', type=str, default='DLv3+torch.pth.tar', help='saved model')
+    parser.add_argument('--out-stride', type=int, default=16, help='network output stride (default: 8)')
+    args = parser.parse_args()
+    infer_dl(args.in_path, args.out_path)

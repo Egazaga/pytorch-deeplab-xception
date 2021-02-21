@@ -5,8 +5,8 @@ from PIL import Image
 from torchvision import transforms
 from tqdm.contrib import tzip
 
-from modeling.deeplab import *
-from modeling import custom_transforms as tr
+from .modeling.deeplab import *
+from .modeling import custom_transforms as tr
 
 
 def infer_dl(in_path, out_path, ckpt='DLv3+torch.pth.tar'):

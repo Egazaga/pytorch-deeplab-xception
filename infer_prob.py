@@ -48,6 +48,7 @@ def infer_dl(in_path, out_path, ckpt='DLv3+torch.pth.tar'):
 
         im = Image.fromarray(pred.astype('uint8'), 'L')
         im.save(out_path + '/' + str(i + 1).zfill(6) + ".png")
+    del model
 
 
 if __name__ == '__main__':

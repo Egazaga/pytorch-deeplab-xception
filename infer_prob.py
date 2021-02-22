@@ -1,16 +1,19 @@
 import argparse
 import numpy as np
 import glob
+import pathlib
+
 from PIL import Image
 from torchvision import transforms
 from tqdm.contrib import tzip
 
-from modeling.deeplab import *
-from modeling import custom_transforms as tr
+from .modeling.deeplab import *
+from .modeling import custom_transforms as tr
 
 
 def infer_dl(in_path, out_path, ckpt='DLv3+torch.pth.tar'):
     model = DeepLab(num_classes=2, backbone='resnet', output_stride=16, sync_bn=False, freeze_bn=False)
+    ckpt = pathlib.Path(__file__).parent.absolute() / ckpt
     ckpt = torch.load(ckpt, map_location='cpu')
     model.load_state_dict(ckpt['state_dict'])
     model.cuda()
@@ -33,11 +36,9 @@ def infer_dl(in_path, out_path, ckpt='DLv3+torch.pth.tar'):
 
         # probability map or threshold
         pred = output[0][1].cpu().numpy()
-        print(pred.shape)
         pred -= pred.min()
         pred *= 255.0 / pred.max()
         pred = np.where(pred < 128, 0, 255)
-        print(pred.shape)
 
         # # max class prob
         # preds = output.cpu()[0].numpy()
